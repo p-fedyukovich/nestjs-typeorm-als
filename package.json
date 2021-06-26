@@ -1,0 +1,19 @@
+{
+  "name": "nestjs-typeorm-als",
+  "version": "0.0.0",
+  "description": "Decorators for TypeORM based on ALS which simplify work with connections and transactions",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/p-fedyukovich/nestjs-typeorm-als.git"
+  },
+  "author": "Pavel Fediukovich <pavel.fedyukovich@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/p-fedyukovich/nestjs-typeorm-als/issues"
+  },
+  "homepage": "https://github.com/p-fedyukovich/nestjs-typeorm-als#readme"
+}
