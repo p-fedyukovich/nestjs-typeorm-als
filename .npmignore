@@ -1,12 +1,16 @@
 # source
+.circleci
 lib
 tests
-index.ts
-yarn-lock.json
+package-lock.json
 tslint.json
 tsconfig.json
 .prettierrc
 .idea
+.eslintignore
+.eslintrc.js
+.commitlintrc.json
+docker-compose.yaml
 
 # github
 .github

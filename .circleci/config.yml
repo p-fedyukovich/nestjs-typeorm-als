@@ -1,0 +1,92 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@4.3.0
+
+jobs:
+  build:
+    working_directory: ~/nestjs-typeorm-als
+    executor:
+      name: node/default
+      tag: lts
+    steps:
+      - checkout
+      - node/install-packages
+      - run:
+          name: Add .npmrc
+          command: echo '//registry.npmjs.org/:_authToken=${NPM_TOKEN}' > ./.npmrc
+      - run:
+          name: Lint
+          command: npm run lint
+      - run:
+          name: Build
+          command: npm run build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  unit_tests:
+    docker:
+      - image: cimg/node:lts
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run test
+          command: npm run test:ci
+      - store_test_results:
+          path: ./reports/junit/
+      - store_artifacts:
+          path: ./reports/junit
+
+  integration_tests:
+    docker:
+      - image: cimg/node:lts
+      - image: circleci/postgres:alpine
+        environment:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Run test
+          command: npm run test:e2e:ci
+      - store_test_results:
+          path: ./reports/junit/
+      - store_artifacts:
+          path: ./reports/junit
+
+  publish_dev:
+    docker:
+      - image: cimg/node:lts
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Set version
+          command: npm version "$(node -pe "require('./package.json').version")-dev.$CIRCLE_SHA1" --no-git-tag-version
+      - run:
+          name: Publish dev
+          command: npm publish --tag dev
+
+workflows:
+  build_and_test:
+    jobs:
+      - build
+      - unit_tests:
+          requires:
+            - build
+      - integration_tests:
+          requires:
+            - build
+      - publish_dev:
+          requires:
+            - unit_tests
+            - integration_tests
+          filters:
+            branches:
+              only:
+                - dev
