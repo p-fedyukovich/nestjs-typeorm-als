@@ -15,8 +15,10 @@
     "build": "rm -rf dist && tsc -p tsconfig.json",
     "format": "prettier --write \"**/*.ts\"",
     "lint": "eslint 'lib/**/*.ts' --fix",
-    "test": "jest --runInBand",
+    "test": "jest --runInBand --passWithNoTests",
+    "test:ci": "npm run test -- --ci --reporters=default --reporters=jest-junit",
     "test:e2e": "jest --config ./tests/jest-e2e.json --runInBand",
+    "test:e2e:ci": "npm run test:e2e -- --ci --reporters=default --reporters=jest-junit",
     "test:e2e:dev": "jest --config ./tests/jest-e2e.json --runInBand --watch",
     "release": "release-it"
   },
@@ -60,6 +62,10 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "jest-junit": {
+    "outputDirectory": "./reports/junit/",
+    "uniqueOutputName": true
   },
   "devDependencies": {
     "@commitlint/cli": "12.1.4",

@@ -17,7 +17,7 @@ describe('TypeOrm session', () => {
         TypeOrmModule.forRoot({
           type: 'postgres',
           host: 'localhost',
-          port: 5440,
+          port: 5432,
           username: 'postgres',
           password: 'postgres',
           entities: [User],
