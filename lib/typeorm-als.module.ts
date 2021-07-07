@@ -56,14 +56,17 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
           get() {
             const store = asyncStorage.getStore();
 
-            const entityManager = getEntityManager(
-              store,
-              this._manager.connection,
-            );
+            if (store) {
+              const entityManager = getEntityManager(
+                store,
+                this._manager.connection,
+              );
 
-            if (entityManager) {
-              return entityManager;
+              if (entityManager) {
+                return entityManager;
+              }
             }
+
             return this._manager;
           },
         });
