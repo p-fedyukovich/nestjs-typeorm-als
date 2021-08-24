@@ -67,7 +67,7 @@ jobs:
           at: .
       - run:
           name: Set version
-          command: npm version "$(node -pe "require('./package.json').version")-dev.$CIRCLE_SHA1" --no-git-tag-version
+          command: npm version "$(node -pe "require('./package.json').version")-dev.$(date +%s)" --no-git-tag-version
       - run:
           name: Publish dev
           command: npm publish --tag dev
