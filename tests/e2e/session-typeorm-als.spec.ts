@@ -96,4 +96,26 @@ describe('TypeOrm session', () => {
       });
     });
   });
+
+  describe('query builder', () => {
+    describe('when request is ok', () => {
+      it('should create an user', async () => {
+        const res = await request(server)
+          .post('/builder')
+          .send({ name: 'Pavel' });
+        expect(connectionSpy.createQueryRunner.calledOnce).toBeTruthy();
+        const queryRunner =
+          connectionSpy.createQueryRunner.getCall(0).returnValue;
+
+        expect(queryRunner.isTransactionActive).toBeFalsy();
+        expect(queryRunner.isReleased).toBeTruthy();
+        expect(res).toMatchObject({
+          statusCode: 201,
+          body: {
+            name: 'Pavel',
+          },
+        });
+      });
+    });
+  });
 });

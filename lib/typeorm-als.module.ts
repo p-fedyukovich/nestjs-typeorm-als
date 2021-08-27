@@ -8,11 +8,11 @@ import {
   NestModule,
 } from '@nestjs/common';
 import { AsyncLocalStorage } from 'async_hooks';
+import { Connection, EntityTarget, QueryRunner, Repository } from 'typeorm';
+import { DiscoveryModule, DiscoveryService } from '@nestjs/core';
 
 import { ASYNC_STORAGE } from './typeorm-als.constants';
-import { DiscoveryModule, DiscoveryService } from '@nestjs/core';
-import { Connection, Repository } from 'typeorm';
-import { getEntityManager } from './typeorm-als.utils';
+import { getEntityManager, getQueryRunner } from './typeorm-als.utils';
 
 @Global()
 @Module({})
@@ -49,8 +49,9 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
 
     wrappers.forEach((wrapper) => {
       const instance = wrapper.instance;
+      const asyncStorage = this.asyncStorage;
+
       if (instance instanceof Repository) {
-        const asyncStorage = this.asyncStorage;
         Object.assign(instance, { _manager: instance.manager });
         Object.defineProperty(instance, 'manager', {
           get() {
@@ -68,6 +69,44 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
             }
 
             return this._manager;
+          },
+        });
+      } else if (instance instanceof Connection) {
+        Object.assign(instance, {
+          _createQueryBuilder: instance.createQueryBuilder,
+        });
+
+        Object.defineProperty(instance, 'createQueryBuilder', {
+          configurable: true,
+          value<Entity>(
+            entityOrRunner?: EntityTarget<Entity> | QueryRunner,
+            alias?: string,
+            queryRunner?: QueryRunner,
+          ) {
+            const store = asyncStorage.getStore();
+            let existingQueryRunner: QueryRunner;
+
+            if (store) {
+              existingQueryRunner = getQueryRunner(store, instance);
+            }
+
+            if (queryRunner || !alias || !existingQueryRunner) {
+              return this._createQueryBuilder(
+                entityOrRunner,
+                alias,
+                queryRunner,
+              );
+            }
+
+            if (!alias) {
+              return this._createQueryBuilder(existingQueryRunner);
+            } else {
+              return this._createQueryBuilder(
+                entityOrRunner,
+                alias,
+                existingQueryRunner,
+              );
+            }
           },
         });
       }

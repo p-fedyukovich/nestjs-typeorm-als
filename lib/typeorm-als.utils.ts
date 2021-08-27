@@ -1,11 +1,32 @@
 import { ENTITY_MANAGER } from './typeorm-als.constants';
-import { Connection, ConnectionOptions, EntityManager } from 'typeorm';
+import {
+  Connection,
+  ConnectionOptions,
+  EntityManager,
+  QueryRunner,
+} from 'typeorm';
 import { getConnectionPrefix } from '@nestjs/typeorm';
 
 function getEntityManagerKey(
   connection: Connection | ConnectionOptions | string,
 ): string {
   return getConnectionPrefix(connection) + ENTITY_MANAGER;
+}
+
+export function getQueryRunner(
+  store: Map<string, any>,
+  connection: Connection | ConnectionOptions | string,
+): QueryRunner | null {
+  const entityManager = getEntityManager(store, connection);
+
+  if (entityManager) {
+    const { queryRunner } = entityManager;
+    if (queryRunner) {
+      return queryRunner;
+    }
+  }
+
+  return null;
 }
 
 export function getEntityManager(
