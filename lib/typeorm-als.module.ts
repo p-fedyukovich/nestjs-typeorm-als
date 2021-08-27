@@ -90,7 +90,11 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
               existingQueryRunner = getQueryRunner(store, instance);
             }
 
-            if (queryRunner || !alias || !existingQueryRunner) {
+            if (
+              queryRunner ||
+              (!alias && entityOrRunner) ||
+              !existingQueryRunner
+            ) {
               return this._createQueryBuilder(
                 entityOrRunner,
                 alias,
