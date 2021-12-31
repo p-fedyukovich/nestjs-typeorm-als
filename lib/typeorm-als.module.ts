@@ -11,13 +11,20 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { Connection, EntityTarget, QueryRunner, Repository } from 'typeorm';
 import { DiscoveryModule, DiscoveryService } from '@nestjs/core';
 
-import { ASYNC_STORAGE } from './typeorm-als.constants';
+import {
+  ASYNC_STORAGE,
+  TYPEORM_ALS_MODULE_OPTIONS,
+} from './typeorm-als.constants';
 import { getEntityManager, getQueryRunner } from './typeorm-als.utils';
+import {
+  TypeOrmAlsAsyncModuleOptions,
+  TypeOrmAlsModuleOptions,
+} from './typeorm-als.interfaces';
 
 @Global()
 @Module({})
 export class TypeOrmAlsModule implements OnModuleInit, NestModule {
-  static forRoot(): DynamicModule {
+  static forRoot(options: TypeOrmAlsModuleOptions): DynamicModule {
     const asyncLocalStorage = this.createALS();
 
     const alsProvider = {
@@ -25,10 +32,37 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
       useValue: asyncLocalStorage,
     };
 
+    const optionsProvider = {
+      provide: TYPEORM_ALS_MODULE_OPTIONS,
+      useValue: options,
+    };
+
     return {
       module: TypeOrmAlsModule,
       imports: [DiscoveryModule],
-      providers: [alsProvider, DiscoveryService],
+      providers: [alsProvider, optionsProvider, DiscoveryService],
+      exports: [alsProvider],
+    };
+  }
+
+  static forRootAsync(options: TypeOrmAlsAsyncModuleOptions): DynamicModule {
+    const asyncLocalStorage = this.createALS();
+
+    const alsProvider = {
+      provide: ASYNC_STORAGE,
+      useValue: asyncLocalStorage,
+    };
+
+    const optionsProvider = {
+      provide: TYPEORM_ALS_MODULE_OPTIONS,
+      useFactory: options.useFactory,
+      inject: options.inject || [],
+    };
+
+    return {
+      module: TypeOrmAlsModule,
+      imports: [DiscoveryModule],
+      providers: [alsProvider, optionsProvider, DiscoveryService],
       exports: [alsProvider],
     };
   }

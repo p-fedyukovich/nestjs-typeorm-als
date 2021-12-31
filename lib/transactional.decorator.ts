@@ -3,7 +3,11 @@ import { EntityManager } from 'typeorm';
 import { getConnectionToken } from '@nestjs/typeorm';
 
 import { Connectable, TransactionalOptions } from './typeorm-als.interfaces';
-import { ASYNC_STORAGE, DEFAULT_OPTIONS } from './typeorm-als.constants';
+import {
+  ASYNC_STORAGE,
+  DEFAULT_OPTIONS,
+  TYPEORM_ALS_MODULE_OPTIONS,
+} from './typeorm-als.constants';
 import { Propagation } from './typeorm-als.enums';
 import {
   deleteEntityManager,
@@ -20,6 +24,7 @@ export function Transactional(options?: TransactionalOptions): MethodDecorator {
 
   const injectStorage = Inject(ASYNC_STORAGE);
   const injectConnection = Inject(getConnectionToken(opts.connection));
+  const injectModuleOptions = Inject(TYPEORM_ALS_MODULE_OPTIONS);
 
   return (
     target: any,
@@ -28,15 +33,17 @@ export function Transactional(options?: TransactionalOptions): MethodDecorator {
   ) => {
     injectStorage(target, 'storage');
     injectConnection(target, 'connection');
+    injectModuleOptions(target, 'typeOrmAlsModuleOptions');
 
     const originalMethod = propertyDescriptor.value;
 
     propertyDescriptor.value = async function (...args: any[]) {
-      const { connection, storage } = this as Connectable;
+      const { connection, storage, typeOrmAlsModuleOptions } =
+        this as Connectable;
 
       const store = storage.getStore();
 
-      if (!store) {
+      if (!store && typeOrmAlsModuleOptions.throwException) {
         throw new Error('Store is not configured');
       }
 
