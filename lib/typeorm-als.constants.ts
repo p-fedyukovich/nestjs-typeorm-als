@@ -10,3 +10,7 @@ export const TRANSACTIONAL_OPTIONS = 'transactional_options';
 export const DEFAULT_OPTIONS = {
   propagation: Propagation.REQUIRED,
 };
+
+export const TYPEORM_ALS_MODULE_DEFAULT_OPTIONS = {
+  throwException: true,
+};

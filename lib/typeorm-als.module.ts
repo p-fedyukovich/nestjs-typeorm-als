@@ -13,6 +13,7 @@ import { DiscoveryModule, DiscoveryService } from '@nestjs/core';
 
 import {
   ASYNC_STORAGE,
+  TYPEORM_ALS_MODULE_DEFAULT_OPTIONS,
   TYPEORM_ALS_MODULE_OPTIONS,
 } from './typeorm-als.constants';
 import { getEntityManager, getQueryRunner } from './typeorm-als.utils';
@@ -24,7 +25,7 @@ import {
 @Global()
 @Module({})
 export class TypeOrmAlsModule implements OnModuleInit, NestModule {
-  static forRoot(options: TypeOrmAlsModuleOptions): DynamicModule {
+  static forRoot(options?: TypeOrmAlsModuleOptions): DynamicModule {
     const asyncLocalStorage = this.createALS();
 
     const alsProvider = {
@@ -34,7 +35,7 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
 
     const optionsProvider = {
       provide: TYPEORM_ALS_MODULE_OPTIONS,
-      useValue: options,
+      useValue: { ...TYPEORM_ALS_MODULE_DEFAULT_OPTIONS, ...options },
     };
 
     return {
@@ -45,7 +46,7 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
     };
   }
 
-  static forRootAsync(options: TypeOrmAlsAsyncModuleOptions): DynamicModule {
+  static forRootAsync(options?: TypeOrmAlsAsyncModuleOptions): DynamicModule {
     const asyncLocalStorage = this.createALS();
 
     const alsProvider = {
@@ -53,11 +54,20 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
       useValue: asyncLocalStorage,
     };
 
-    const optionsProvider = {
-      provide: TYPEORM_ALS_MODULE_OPTIONS,
-      useFactory: options.useFactory,
-      inject: options.inject || [],
-    };
+    let optionsProvider;
+
+    if (options) {
+      optionsProvider = {
+        provide: TYPEORM_ALS_MODULE_OPTIONS,
+        useFactory: options.useFactory,
+        inject: options.inject || [],
+      };
+    } else {
+      optionsProvider = {
+        provide: TYPEORM_ALS_MODULE_OPTIONS,
+        useValue: TYPEORM_ALS_MODULE_DEFAULT_OPTIONS,
+      };
+    }
 
     return {
       module: TypeOrmAlsModule,

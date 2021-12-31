@@ -24,7 +24,7 @@ export interface Connectable {
 }
 
 export interface TypeOrmAlsModuleOptions {
-  throwException: boolean;
+  throwException?: boolean;
 }
 
 export interface TypeOrmAlsAsyncModuleOptions
