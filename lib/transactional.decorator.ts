@@ -41,9 +41,13 @@ export function Transactional(options?: TransactionalOptions): MethodDecorator {
       const { connection, storage, typeOrmAlsModuleOptions } =
         this as Connectable;
 
+      if (typeOrmAlsModuleOptions.disabled) {
+        return originalMethod.apply(this, args);
+      }
+
       const store = storage.getStore();
 
-      if (!store && typeOrmAlsModuleOptions.throwException) {
+      if (!store) {
         throw new Error('Store is not configured');
       }
 

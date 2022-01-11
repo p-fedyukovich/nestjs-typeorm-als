@@ -12,5 +12,5 @@ export const DEFAULT_OPTIONS = {
 };
 
 export const TYPEORM_ALS_MODULE_DEFAULT_OPTIONS = {
-  throwException: true,
+  disabled: false,
 };
