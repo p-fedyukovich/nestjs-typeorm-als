@@ -86,82 +86,79 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
     private readonly asyncStorage: AsyncLocalStorage<Map<string, any>>,
     private readonly connection: Connection,
     private readonly discovery: DiscoveryService,
-    private readonly options: TypeOrmAlsModuleOptions,
   ) {}
 
   onModuleInit(): any {
-    if (!this.options.disabled) {
-      const wrappers = this.discovery.getProviders();
+    const wrappers = this.discovery.getProviders();
 
-      wrappers.forEach((wrapper) => {
-        const instance = wrapper.instance;
-        const asyncStorage = this.asyncStorage;
+    wrappers.forEach((wrapper) => {
+      const instance = wrapper.instance;
+      const asyncStorage = this.asyncStorage;
 
-        if (instance instanceof Repository) {
-          Object.assign(instance, { _manager: instance.manager });
-          Object.defineProperty(instance, 'manager', {
-            get() {
-              const store = asyncStorage.getStore();
+      if (instance instanceof Repository) {
+        Object.assign(instance, { _manager: instance.manager });
+        Object.defineProperty(instance, 'manager', {
+          get() {
+            const store = asyncStorage.getStore();
 
-              if (store) {
-                const entityManager = getEntityManager(
-                  store,
-                  this._manager.connection,
-                );
+            if (store) {
+              const entityManager = getEntityManager(
+                store,
+                this._manager.connection,
+              );
 
-                if (entityManager) {
-                  return entityManager;
-                }
+              if (entityManager) {
+                return entityManager;
               }
+            }
 
-              return this._manager;
-            },
-          });
-        } else if (instance instanceof Connection) {
-          Object.assign(instance, {
-            _createQueryBuilder: instance.createQueryBuilder,
-          });
+            return this._manager;
+          },
+        });
+      } else if (instance instanceof Connection) {
+        Object.assign(instance, {
+          _createQueryBuilder: instance.createQueryBuilder,
+        });
 
-          Object.defineProperty(instance, 'createQueryBuilder', {
-            configurable: true,
-            value<Entity>(
-              entityOrRunner?: EntityTarget<Entity> | QueryRunner,
-              alias?: string,
-              queryRunner?: QueryRunner,
+        Object.defineProperty(instance, 'createQueryBuilder', {
+          configurable: true,
+          value<Entity>(
+            entityOrRunner?: EntityTarget<Entity> | QueryRunner,
+            alias?: string,
+            queryRunner?: QueryRunner,
+          ) {
+            const store = asyncStorage.getStore();
+            let existingQueryRunner: QueryRunner;
+
+            if (store) {
+              existingQueryRunner = getQueryRunner(store, instance);
+            }
+
+            if (
+              queryRunner ||
+              (!alias && entityOrRunner) ||
+              !existingQueryRunner
             ) {
-              const store = asyncStorage.getStore();
-              let existingQueryRunner: QueryRunner;
+              return this._createQueryBuilder(
+                entityOrRunner,
+                alias,
+                queryRunner,
+              );
+            }
 
-              if (store) {
-                existingQueryRunner = getQueryRunner(store, instance);
-              }
-
-              if (
-                queryRunner ||
-                (!alias && entityOrRunner) ||
-                !existingQueryRunner
-              ) {
-                return this._createQueryBuilder(
-                  entityOrRunner,
-                  alias,
-                  queryRunner,
-                );
-              }
-
-              if (!alias) {
-                return this._createQueryBuilder(existingQueryRunner);
-              } else {
-                return this._createQueryBuilder(
-                  entityOrRunner,
-                  alias,
-                  existingQueryRunner,
-                );
-              }
-            },
-          });
-        }
-      });
-    }
+            if (!alias) {
+              return this._createQueryBuilder(existingQueryRunner);
+            } else {
+              return this._createQueryBuilder(
+                entityOrRunner,
+                alias,
+                existingQueryRunner,
+              );
+            }
+          },
+        });
+      }
+    });
   }
 
   configure(consumer: MiddlewareConsumer): any {
