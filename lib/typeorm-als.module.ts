@@ -86,7 +86,6 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
     private readonly asyncStorage: AsyncLocalStorage<Map<string, any>>,
     private readonly connection: Connection,
     private readonly discovery: DiscoveryService,
-    @Inject(TYPEORM_ALS_MODULE_OPTIONS)
     private readonly options: TypeOrmAlsModuleOptions,
   ) {}
 
