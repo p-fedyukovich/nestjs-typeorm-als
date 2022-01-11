@@ -42,7 +42,7 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
       module: TypeOrmAlsModule,
       imports: [DiscoveryModule],
       providers: [alsProvider, optionsProvider, DiscoveryService],
-      exports: [alsProvider],
+      exports: [alsProvider, optionsProvider],
     };
   }
 
@@ -73,7 +73,7 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
       module: TypeOrmAlsModule,
       imports: [DiscoveryModule],
       providers: [alsProvider, optionsProvider, DiscoveryService],
-      exports: [alsProvider],
+      exports: [alsProvider, optionsProvider],
     };
   }
 
