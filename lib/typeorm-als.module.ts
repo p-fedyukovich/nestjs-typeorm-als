@@ -116,42 +116,48 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
           },
         });
       } else if (instance instanceof Connection) {
-        const createQueryBuilder = instance.createQueryBuilder;
+        Object.defineProperty(instance, '_createQueryBuilder', {
+          configurable: true,
+          value: instance.createQueryBuilder,
+        });
 
-        instance.createQueryBuilder = function <Entity>(
-          entityOrRunner?: EntityTarget<Entity> | QueryRunner,
-          alias?: string,
-          queryRunner?: QueryRunner,
-        ) {
-          const store = asyncStorage.getStore();
-          let existingQueryRunner: QueryRunner;
-
-          if (store) {
-            existingQueryRunner = getQueryRunner(store, instance);
-          }
-
-          if (
-            queryRunner ||
-            (!alias && entityOrRunner) ||
-            !existingQueryRunner
+        Object.defineProperty(instance, 'createQueryBuilder', {
+          configurable: true,
+          value<Entity>(
+            entityOrRunner?: EntityTarget<Entity> | QueryRunner,
+            alias?: string,
+            queryRunner?: QueryRunner,
           ) {
-            return createQueryBuilder(
-              entityOrRunner as EntityTarget<Entity>,
-              alias,
-              queryRunner,
-            );
-          }
+            const store = asyncStorage.getStore();
+            let existingQueryRunner: QueryRunner;
 
-          if (!alias) {
-            return createQueryBuilder(existingQueryRunner);
-          } else {
-            return createQueryBuilder(
-              entityOrRunner as EntityTarget<Entity>,
-              alias,
-              existingQueryRunner,
-            );
-          }
-        };
+            if (store) {
+              existingQueryRunner = getQueryRunner(store, instance);
+            }
+
+            if (
+              queryRunner ||
+              (!alias && entityOrRunner) ||
+              !existingQueryRunner
+            ) {
+              return this._createQueryBuilder(
+                entityOrRunner as EntityTarget<Entity>,
+                alias,
+                queryRunner,
+              );
+            }
+
+            if (!alias) {
+              return this._createQueryBuilder(existingQueryRunner);
+            } else {
+              return this._createQueryBuilder(
+                entityOrRunner as EntityTarget<Entity>,
+                alias,
+                existingQueryRunner,
+              );
+            }
+          },
+        });
       }
     });
   }
