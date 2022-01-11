@@ -116,9 +116,11 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
           },
         });
       } else if (instance instanceof Connection) {
-        Object.assign(instance, {
-          _createQueryBuilder: instance.createQueryBuilder,
-        });
+        Object.defineProperty(
+          instance,
+          '_createQueryBuilder',
+          Object.getOwnPropertyDescriptor(instance, 'createQueryBuilder'),
+        );
 
         Object.defineProperty(instance, 'createQueryBuilder', {
           configurable: true,
