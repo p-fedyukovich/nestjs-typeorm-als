@@ -116,15 +116,9 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
           },
         });
       } else if (instance instanceof Connection) {
-        Object.defineProperty(
-          instance,
-          '_createQueryBuilder',
-          Object.getOwnPropertyDescriptor(instance, 'createQueryBuilder'),
-        );
-
-        Object.defineProperty(instance, 'createQueryBuilder', {
-          configurable: true,
-          value<Entity>(
+        Object.assign(instance, {
+          _createQueryBuilder: instance.createQueryBuilder,
+          createQueryBuilder<Entity>(
             entityOrRunner?: EntityTarget<Entity> | QueryRunner,
             alias?: string,
             queryRunner?: QueryRunner,
@@ -142,7 +136,7 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
               !existingQueryRunner
             ) {
               return this._createQueryBuilder(
-                entityOrRunner,
+                entityOrRunner as EntityTarget<Entity>,
                 alias,
                 queryRunner,
               );
@@ -152,7 +146,7 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
               return this._createQueryBuilder(existingQueryRunner);
             } else {
               return this._createQueryBuilder(
-                entityOrRunner,
+                entityOrRunner as EntityTarget<Entity>,
                 alias,
                 existingQueryRunner,
               );
