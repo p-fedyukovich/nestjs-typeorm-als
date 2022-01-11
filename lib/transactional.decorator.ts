@@ -43,11 +43,15 @@ export function Transactional(options?: TransactionalOptions): MethodDecorator {
 
       const store = storage.getStore();
 
-      if (!store && typeOrmAlsModuleOptions.throwException) {
-        throw new Error('Store is not configured');
-      }
-
       const runOriginal = () => originalMethod.apply(this, args);
+
+      if (!store) {
+        if (typeOrmAlsModuleOptions.throwException) {
+          throw new Error('Store is not configured');
+        } else {
+          return runOriginal();
+        }
+      }
 
       const runWithNewTransaction = () => {
         const transactionCallback = async (manager: EntityManager) => {
