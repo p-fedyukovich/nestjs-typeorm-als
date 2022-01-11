@@ -118,11 +118,11 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
       } else if (instance instanceof Connection) {
         const createQueryBuilder = instance.createQueryBuilder;
 
-        instance.createQueryBuilder = <Entity>(
+        instance.createQueryBuilder = function <Entity>(
           entityOrRunner?: EntityTarget<Entity> | QueryRunner,
           alias?: string,
           queryRunner?: QueryRunner,
-        ) => {
+        ) {
           const store = asyncStorage.getStore();
           let existingQueryRunner: QueryRunner;
 
