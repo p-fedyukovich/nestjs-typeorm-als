@@ -49,4 +49,11 @@ export class UserController {
       })
       .getOne();
   }
+
+  @Post('/transactional')
+  @UsePipes(UserExistsPipe)
+  @RequestTransaction()
+  createUserWithTransactional(@Body() userDto: UserDto): Promise<User> {
+    return this.users.createAndGet(userDto);
+  }
 }

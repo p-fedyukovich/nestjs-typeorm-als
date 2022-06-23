@@ -7,6 +7,7 @@ import { Connection } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { PurseRepository } from '../src/purse/purse.repository';
 import { RemittanceRepository } from '../src/remittance/remittance.repository';
+import { UserService } from '../src/users/user.service';
 
 jest.setTimeout(500 * 1000);
 
@@ -18,6 +19,7 @@ describe('TypeOrm session', () => {
   let userRepository: UserRepository;
   let purseRepository: PurseRepository;
   let remittanceRepository: RemittanceRepository;
+  let userService: UserService;
   let connection: Connection;
 
   beforeAll(async () => {
@@ -40,6 +42,7 @@ describe('TypeOrm session', () => {
     userRepository = app.get(UserRepository);
     purseRepository = app.get(PurseRepository);
     remittanceRepository = app.get(RemittanceRepository);
+    userService = app.get(UserService);
   });
 
   afterAll(async () => {
@@ -109,6 +112,39 @@ describe('TypeOrm session', () => {
             name: 'Pavel',
           },
         });
+      });
+    });
+  });
+
+  describe('transactional decorator', () => {
+    it('should create an user using request', async () => {
+      const res = await request(server)
+        .post('/transactional')
+        .send({ name: 'Pavel' });
+      expect(connectionSpy.createQueryRunner.calledOnce).toBeTruthy();
+      const queryRunner =
+        connectionSpy.createQueryRunner.getCall(0).returnValue;
+
+      expect(queryRunner.isTransactionActive).toBeFalsy();
+      expect(queryRunner.isReleased).toBeTruthy();
+      expect(res).toMatchObject({
+        statusCode: 201,
+        body: {
+          name: 'Pavel',
+        },
+      });
+    });
+
+    it('should create an user via service', async () => {
+      const user = await userService.createAndGet({ name: 'Petr' });
+      expect(connectionSpy.createQueryRunner.calledOnce).toBeTruthy();
+      const queryRunner =
+        connectionSpy.createQueryRunner.getCall(0).returnValue;
+
+      expect(queryRunner.isTransactionActive).toBeFalsy();
+      expect(queryRunner.isReleased).toBeTruthy();
+      expect(user).toMatchObject({
+        name: 'Petr',
       });
     });
   });

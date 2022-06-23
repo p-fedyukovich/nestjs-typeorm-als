@@ -3,6 +3,7 @@ import { UserDto } from './user.dto';
 import { User } from '../entity/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { Transactional } from '../../../lib';
 
 @Injectable()
 export class UserService {
@@ -18,5 +19,11 @@ export class UserService {
     return await this.userRepository.findOne(userId, {
       relations: ['purses', 'defaultPurse'],
     });
+  }
+
+  @Transactional()
+  async createAndGet(userDto: UserDto): Promise<User> {
+    const user = await this.create(userDto);
+    return this.getById(user.id);
   }
 }
