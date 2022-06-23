@@ -10,11 +10,19 @@ import { RequestTransaction } from '../../../lib';
 export class RemittanceController {
   public constructor(
     private readonly rem: RemittanceService,
-    @InjectConnection() private readonly connection: Connection) {}
+    @InjectConnection() private readonly connection: Connection,
+  ) {}
 
   @Post('remittance/remittance-with-transaction')
   @RequestTransaction()
-  async makeRemittanceWithTransaction(@Body() remittanceDto: RemittanceDto): Promise<RemittanceResultDto> {
-    return await this.rem.makeRemittance(remittanceDto.userIdFrom, remittanceDto.userIdTo, remittanceDto.sum, remittanceDto.withError);
+  async makeRemittanceWithTransaction(
+    @Body() remittanceDto: RemittanceDto,
+  ): Promise<RemittanceResultDto> {
+    return await this.rem.makeRemittance(
+      remittanceDto.userIdFrom,
+      remittanceDto.userIdTo,
+      remittanceDto.sum,
+      remittanceDto.withError,
+    );
   }
 }

@@ -8,7 +8,7 @@ import { AppModule } from '../src/app.module';
 import { PurseRepository } from '../src/purse/purse.repository';
 import { RemittanceRepository } from '../src/remittance/remittance.repository';
 
-jest.setTimeout(500*1000);
+jest.setTimeout(500 * 1000);
 
 describe('TypeOrm session', () => {
   let app: INestApplication;
@@ -37,12 +37,9 @@ describe('TypeOrm session', () => {
 
     connectionSpy = sandbox.spy(connection);
 
-
     userRepository = app.get(UserRepository);
     purseRepository = app.get(PurseRepository);
     remittanceRepository = app.get(RemittanceRepository);
-
-
   });
 
   afterAll(async () => {
@@ -61,7 +58,8 @@ describe('TypeOrm session', () => {
     it('should create an user', async () => {
       const res = await request(server).post('/').send({ name: 'Pavel' });
       expect(connectionSpy.createQueryRunner.calledOnce).toBeTruthy();
-      const queryRunner = connectionSpy.createQueryRunner.getCall(0).returnValue;
+      const queryRunner =
+        connectionSpy.createQueryRunner.getCall(0).returnValue;
 
       expect(queryRunner.isTransactionActive).toBeFalsy();
       expect(queryRunner.isReleased).toBeTruthy();
@@ -72,18 +70,13 @@ describe('TypeOrm session', () => {
         },
       });
     });
-
-
-
-
-
-
   });
 
   describe('when error is thrown', () => {
     it('should rollback and return 500', async () => {
       const res = await request(server).get('/').send();
-      const queryRunner = connectionSpy.createQueryRunner.getCall(0).returnValue;
+      const queryRunner =
+        connectionSpy.createQueryRunner.getCall(0).returnValue;
 
       expect(queryRunner.isTransactionActive).toBeFalsy();
       expect(queryRunner.isReleased).toBeTruthy();

@@ -3,21 +3,20 @@ import { User } from './user.entity';
 import { Purse } from './purse.entity';
 
 class RemittanceDetails {
-  @Column({nullable: false})
-  @OneToOne(() => User, user => user.id, {onDelete: "CASCADE"})
+  @Column({ nullable: false })
+  @OneToOne(() => User, (user) => user.id, { onDelete: 'CASCADE' })
   userId: number;
 
-  @Column({nullable: false})
-  @OneToOne(() => Purse, purse => purse.id, {onDelete: "CASCADE"})
+  @Column({ nullable: false })
+  @OneToOne(() => Purse, (purse) => purse.id, { onDelete: 'CASCADE' })
   purseId: number;
 
-  @Column({nullable: false})
+  @Column({ nullable: false })
   balanceBefore: number;
 
-  @Column({nullable: false})
+  @Column({ nullable: false })
   balanceAfter: number;
 }
-
 
 @Entity({ name: 'remittance' })
 export class Remittance {
@@ -26,7 +25,6 @@ export class Remittance {
 
   @Column({ nullable: false, default: 0, type: 'integer' })
   sum!: number;
-
 
   @Column(() => RemittanceDetails)
   from: RemittanceDetails;
@@ -64,4 +62,3 @@ export class Remittance {
   toBalanceAfter: number;
    */
 }
-

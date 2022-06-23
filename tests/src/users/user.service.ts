@@ -15,6 +15,8 @@ export class UserService {
   }
 
   async getById(userId: number): Promise<User> {
-    return await this.userRepository.findOne(userId, {relations: ['purses', 'defaultPurse'] });
+    return await this.userRepository.findOne(userId, {
+      relations: ['purses', 'defaultPurse'],
+    });
   }
 }

@@ -22,14 +22,20 @@ export class PurseController {
 
   @Post('purse/:userId')
   @RequestTransaction()
-  async createPurseForUser(@Param('userId') userId: string, @Body() purseDto: PurseDto): Promise<Purse> {
+  async createPurseForUser(
+    @Param('userId') userId: string,
+    @Body() purseDto: PurseDto,
+  ): Promise<Purse> {
     const userIdNum = Number(userId);
     return await this.purses.create(purseDto, userIdNum);
   }
 
   @Patch('purse/:purseId/top-up')
   @RequestTransaction()
-  async topUpPurse(@Param('purseId') purseId: string, @Body() balanceValue: BalanceValueDto): Promise<Purse> {
+  async topUpPurse(
+    @Param('purseId') purseId: string,
+    @Body() balanceValue: BalanceValueDto,
+  ): Promise<Purse> {
     const purseIdNum = Number(purseId);
     return this.purses.topUp(purseIdNum, balanceValue.sum);
   }

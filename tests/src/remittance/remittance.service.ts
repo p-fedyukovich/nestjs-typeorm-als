@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Remittance } from '../entity/remittance.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { NOT_ENOUGH_MONEY, NOT_FOUND_USER_WITH_ID, USER_DOES_NOT_HAVE_PURSE } from '../errors/errors';
+import {
+  NOT_ENOUGH_MONEY,
+  NOT_FOUND_USER_WITH_ID,
+  USER_DOES_NOT_HAVE_PURSE,
+} from '../errors/errors';
 import { UserService } from '../users/user.service';
 import { PurseService } from '../purse/purse.service';
 import { RemittanceRepository } from './remittance.repository';
@@ -12,10 +16,16 @@ export class RemittanceService {
   public constructor(
     private readonly users: UserService,
     private readonly purses: PurseService,
-    @InjectRepository(Remittance) private readonly remittance: RemittanceRepository,
+    @InjectRepository(Remittance)
+    private readonly remittance: RemittanceRepository,
   ) {}
 
-  async makeRemittance(fromId: number, toId: number, sum: number, withError = false): Promise<RemittanceResultDto> {
+  async makeRemittance(
+    fromId: number,
+    toId: number,
+    sum: number,
+    withError = false,
+  ): Promise<RemittanceResultDto> {
     const fromUser = await this.users.getById(fromId);
     const toUser = await this.users.getById(toId);
     if (fromUser === undefined) {
@@ -63,7 +73,7 @@ export class RemittanceService {
       purseId: fromPurse.id,
       balanceBefore: toBalanceBefore,
       balanceAfter: toBalanceAfter,
-    }
+    };
     /*
     remittance.fromUserId = fromId;
     remittance.fromPurseId = fromPurse.id;

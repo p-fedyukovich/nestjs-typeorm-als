@@ -9,18 +9,11 @@ import { PurseModule } from '../purse/purse.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([
-      Remittance,
-      RemittanceRepository,
-    ]),
+    TypeOrmModule.forFeature([Remittance, RemittanceRepository]),
     UserModule,
     PurseModule,
   ],
-  controllers: [
-    RemittanceController,
-  ],
-  providers: [
-    RemittanceService,
-  ]
+  controllers: [RemittanceController],
+  providers: [RemittanceService],
 })
 export class RemittanceModule {}

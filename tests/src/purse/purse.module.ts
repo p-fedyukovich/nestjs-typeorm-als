@@ -10,20 +10,10 @@ import { PurseRepository } from './purse.repository';
 @Module({
   imports: [
     TypeOrmAlsModule.forRoot(),
-    TypeOrmModule.forFeature([
-      User,
-      Purse,
-      PurseRepository,
-    ])
+    TypeOrmModule.forFeature([User, Purse, PurseRepository]),
   ],
-  controllers: [
-    PurseController,
-  ],
-  providers: [
-    PurseService,
-  ],
-  exports: [
-    PurseService,
-  ]
+  controllers: [PurseController],
+  providers: [PurseService],
+  exports: [PurseService],
 })
 export class PurseModule {}

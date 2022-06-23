@@ -7,21 +7,9 @@ import { UserService } from './user.service';
 import { Purse } from '../entity/purse.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      User,
-      Purse,
-      UserRepository,
-    ]),
-  ],
-  controllers: [
-    UserController,
-  ],
-  providers: [
-    UserService,
-  ],
-  exports: [
-    UserService,
-  ]
+  imports: [TypeOrmModule.forFeature([User, Purse, UserRepository])],
+  controllers: [UserController],
+  providers: [UserService],
+  exports: [UserService],
 })
 export class UserModule {}

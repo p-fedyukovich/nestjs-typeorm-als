@@ -9,9 +9,9 @@ export class Purse {
   @Column({ nullable: false, default: 0, type: 'integer' })
   balance!: number;
 
-  @Column({ nullable: false})
+  @Column({ nullable: false })
   userId!: number;
 
-  @ManyToOne(() => User, user => user.purses, {onDelete: "CASCADE"})
+  @ManyToOne(() => User, (user) => user.purses, { onDelete: 'CASCADE' })
   user?: User;
 }
