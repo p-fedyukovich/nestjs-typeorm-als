@@ -11,21 +11,13 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { Connection, EntityTarget, QueryRunner, Repository } from 'typeorm';
 import { DiscoveryModule, DiscoveryService } from '@nestjs/core';
 
-import {
-  ASYNC_STORAGE,
-  TYPEORM_ALS_MODULE_DEFAULT_OPTIONS,
-  TYPEORM_ALS_MODULE_OPTIONS,
-} from './typeorm-als.constants';
+import { ASYNC_STORAGE } from './typeorm-als.constants';
 import { getEntityManager, getQueryRunner } from './typeorm-als.utils';
-import {
-  TypeOrmAlsAsyncModuleOptions,
-  TypeOrmAlsModuleOptions,
-} from './typeorm-als.interfaces';
 
 @Global()
 @Module({})
 export class TypeOrmAlsModule implements OnModuleInit, NestModule {
-  static forRoot(options?: TypeOrmAlsModuleOptions): DynamicModule {
+  static forRoot(): DynamicModule {
     const asyncLocalStorage = this.createALS();
 
     const alsProvider = {
@@ -33,47 +25,11 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
       useValue: asyncLocalStorage,
     };
 
-    const optionsProvider = {
-      provide: TYPEORM_ALS_MODULE_OPTIONS,
-      useValue: { ...TYPEORM_ALS_MODULE_DEFAULT_OPTIONS, ...options },
-    };
-
     return {
       module: TypeOrmAlsModule,
       imports: [DiscoveryModule],
-      providers: [alsProvider, optionsProvider, DiscoveryService],
-      exports: [alsProvider, optionsProvider],
-    };
-  }
-
-  static forRootAsync(options?: TypeOrmAlsAsyncModuleOptions): DynamicModule {
-    const asyncLocalStorage = this.createALS();
-
-    const alsProvider = {
-      provide: ASYNC_STORAGE,
-      useValue: asyncLocalStorage,
-    };
-
-    let optionsProvider;
-
-    if (options) {
-      optionsProvider = {
-        provide: TYPEORM_ALS_MODULE_OPTIONS,
-        useFactory: options.useFactory,
-        inject: options.inject || [],
-      };
-    } else {
-      optionsProvider = {
-        provide: TYPEORM_ALS_MODULE_OPTIONS,
-        useValue: TYPEORM_ALS_MODULE_DEFAULT_OPTIONS,
-      };
-    }
-
-    return {
-      module: TypeOrmAlsModule,
-      imports: [DiscoveryModule],
-      providers: [alsProvider, optionsProvider, DiscoveryService],
-      exports: [alsProvider, optionsProvider],
+      providers: [alsProvider, DiscoveryService],
+      exports: [alsProvider],
     };
   }
 
@@ -116,9 +72,8 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
           },
         });
       } else if (instance instanceof Connection) {
-        Object.defineProperty(instance, '_createQueryBuilder', {
-          configurable: true,
-          value: instance.createQueryBuilder,
+        Object.assign(instance, {
+          _createQueryBuilder: instance.createQueryBuilder,
         });
 
         Object.defineProperty(instance, 'createQueryBuilder', {
@@ -141,7 +96,7 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
               !existingQueryRunner
             ) {
               return this._createQueryBuilder(
-                entityOrRunner as EntityTarget<Entity>,
+                entityOrRunner,
                 alias,
                 queryRunner,
               );
@@ -151,7 +106,7 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
               return this._createQueryBuilder(existingQueryRunner);
             } else {
               return this._createQueryBuilder(
-                entityOrRunner as EntityTarget<Entity>,
+                entityOrRunner,
                 alias,
                 existingQueryRunner,
               );
