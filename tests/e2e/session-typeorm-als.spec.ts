@@ -1,13 +1,14 @@
 import { Test } from '@nestjs/testing';
 import * as Sinon from 'sinon';
 import * as request from 'supertest';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { INestApplication } from '@nestjs/common';
-import { User } from '../src/user.entity';
-import { TypeormAlsController } from '../src/typeorm-als.controller';
-import { TypeOrmAlsModule } from '../../lib';
-import { UserRepository } from '../src/user.repository';
+import { UserRepository } from '../src/users/user.repository';
 import { Connection } from 'typeorm';
+import { AppModule } from '../src/app.module';
+import { PurseRepository } from '../src/purse/purse.repository';
+import { RemittanceRepository } from '../src/remittance/remittance.repository';
+
+jest.setTimeout(500 * 1000);
 
 describe('TypeOrm session', () => {
   let app: INestApplication;
@@ -15,24 +16,13 @@ describe('TypeOrm session', () => {
   let sandbox: Sinon.SinonSandbox;
   let connectionSpy: Sinon.SinonSpiedInstance<Connection>;
   let userRepository: UserRepository;
+  let purseRepository: PurseRepository;
+  let remittanceRepository: RemittanceRepository;
+  let connection: Connection;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
-      imports: [
-        TypeOrmModule.forRoot({
-          type: 'postgres',
-          host: 'localhost',
-          port: 5432,
-          username: 'postgres',
-          password: 'postgres',
-          entities: [User],
-          synchronize: true,
-          logging: 'all',
-        }),
-        TypeOrmModule.forFeature([UserRepository]),
-        TypeOrmAlsModule.forRoot(),
-      ],
-      controllers: [TypeormAlsController],
+      imports: [AppModule],
     }).compile();
 
     app = module.createNestApplication();
@@ -43,11 +33,13 @@ describe('TypeOrm session', () => {
 
     await app.init();
 
-    const connection = app.get(Connection);
-
-    userRepository = app.get(UserRepository);
+    connection = app.get(Connection);
 
     connectionSpy = sandbox.spy(connection);
+
+    userRepository = app.get(UserRepository);
+    purseRepository = app.get(PurseRepository);
+    remittanceRepository = app.get(RemittanceRepository);
   });
 
   afterAll(async () => {
@@ -57,6 +49,8 @@ describe('TypeOrm session', () => {
 
   afterEach(async () => {
     await userRepository.delete({});
+    await purseRepository.delete({});
+    await remittanceRepository.delete({});
     sandbox.reset();
   });
 
