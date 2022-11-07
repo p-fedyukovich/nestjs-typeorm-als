@@ -16,7 +16,10 @@ export class UserService {
   }
 
   async getById(userId: number): Promise<User> {
-    return await this.userRepository.findOne(userId, {
+    return await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
       relations: ['purses', 'defaultPurse'],
     });
   }

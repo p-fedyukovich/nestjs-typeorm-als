@@ -1,14 +1,13 @@
 import { INestApplication } from '@nestjs/common';
 import * as Sinon from 'sinon';
-import { Connection, QueryRunner } from 'typeorm';
-import { UserRepository } from '../src/users/user.repository';
-import { PurseRepository } from '../src/purse/purse.repository';
-import { RemittanceRepository } from '../src/remittance/remittance.repository';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import * as request from 'supertest';
 import { Purse } from '../src/entity/purse.entity';
 import { expectTransactionCount } from './fixtures/transaction-count-on-connection';
+import { User } from '../src/entity/user.entity';
+import { Remittance } from '../src/entity/remittance.entity';
 
 describe('TypeOrm session', () => {
   let app: INestApplication;
@@ -16,10 +15,10 @@ describe('TypeOrm session', () => {
   let sandbox: Sinon.SinonSandbox;
   let connectionStub: Sinon.SinonStub;
   let trxs: Sinon.SinonSpy[] = [];
-  let userRepository: UserRepository;
-  let purseRepository: PurseRepository;
-  let remittanceRepository: RemittanceRepository;
-  let connection: Connection;
+  let userRepository: Repository<User>;
+  let purseRepository: Repository<Purse>;
+  let remittanceRepository: Repository<Remittance>;
+  let dataSource: DataSource;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -34,9 +33,11 @@ describe('TypeOrm session', () => {
 
     await app.init();
 
-    userRepository = app.get(UserRepository);
-    purseRepository = app.get(PurseRepository);
-    remittanceRepository = app.get(RemittanceRepository);
+    dataSource = app.get(DataSource);
+
+    userRepository = dataSource.getRepository(User);
+    purseRepository = dataSource.getRepository(Purse);
+    remittanceRepository = dataSource.getRepository(Remittance);
   });
 
   afterAll(async () => {
@@ -45,11 +46,10 @@ describe('TypeOrm session', () => {
   });
 
   beforeEach(() => {
-    connection = app.get(Connection);
-    const original = connection.createQueryRunner;
-    connectionStub = Sinon.stub(connection, 'createQueryRunner').callsFake(
+    const original = dataSource.createQueryRunner;
+    connectionStub = Sinon.stub(dataSource, 'createQueryRunner').callsFake(
       () => {
-        const result = original.bind(connection)() as QueryRunner;
+        const result = original.bind(dataSource)() as QueryRunner;
         trxs.push(Sinon.spy(result, 'startTransaction'));
         return result;
       },

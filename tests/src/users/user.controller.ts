@@ -6,20 +6,19 @@ import {
   Post,
   UsePipes,
 } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
 
 import { User } from '../entity/user.entity';
 import { RequestTransaction } from '../../../lib';
 import { UserExistsPipe } from './user-exists.pipe';
 import { UserDto } from './user.dto';
 import { UserService } from './user.service';
+import { DataSource } from 'typeorm';
 
 @Controller()
 export class UserController {
   constructor(
     private readonly users: UserService,
-    @InjectConnection() private readonly connection: Connection,
+    private readonly dataSource: DataSource,
   ) {}
 
   @Post()
@@ -40,9 +39,9 @@ export class UserController {
   @UsePipes(UserExistsPipe)
   @RequestTransaction()
   async createUserBuilder(@Body() data: any): Promise<User> {
-    const insertBuilder = this.connection.createQueryBuilder(User, 'user');
+    const insertBuilder = this.dataSource.createQueryBuilder(User, 'user');
     const user = await insertBuilder.insert().values(data).execute();
-    const selectBuilder = this.connection.createQueryBuilder(User, 'user');
+    const selectBuilder = this.dataSource.createQueryBuilder(User, 'user');
     return selectBuilder
       .where('user.id = :userId', {
         userId: user.identifiers[0].id,

@@ -6,8 +6,8 @@ import {
   Inject,
 } from '@nestjs/common';
 import { from, Observable, throwError } from 'rxjs';
-import { Connection } from 'typeorm';
-import { getConnectionToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { getDataSourceToken } from '@nestjs/typeorm';
 import { ModuleRef, Reflector } from '@nestjs/core';
 import { ASYNC_STORAGE, TRANSACTIONAL_OPTIONS } from './typeorm-als.constants';
 import {
@@ -37,11 +37,11 @@ export class TransactionInterceptor implements NestInterceptor {
       TRANSACTIONAL_OPTIONS,
       context.getHandler(),
     );
-    const connectionToken = getConnectionToken(options?.connection) as string;
-    const connection = await this.moduleRef.get<Connection>(connectionToken, {
+    const dataSourceToken = getDataSourceToken(options?.connection) as string;
+    const dataSource = await this.moduleRef.get<DataSource>(dataSourceToken, {
       strict: false,
     });
-    const queryRunner = connection.createQueryRunner();
+    const queryRunner = dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction(options?.isolation);
 

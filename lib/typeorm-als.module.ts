@@ -8,16 +8,20 @@ import {
   NestModule,
 } from '@nestjs/common';
 import { AsyncLocalStorage } from 'async_hooks';
-import { Connection, EntityTarget, QueryRunner, Repository } from 'typeorm';
+import { DataSource, QueryRunner, Repository } from 'typeorm';
 import { DiscoveryModule, DiscoveryService } from '@nestjs/core';
 
-import { ASYNC_STORAGE } from './typeorm-als.constants';
+import {
+  ASYNC_STORAGE,
+  TYPE_ORM_ALS_MODULE_OPTIONS,
+} from './typeorm-als.constants';
 import { getEntityManager, getQueryRunner } from './typeorm-als.utils';
+import { TypeOrmAlsModuleOptions } from './typeorm-als.interfaces';
 
 @Global()
 @Module({})
 export class TypeOrmAlsModule implements OnModuleInit, NestModule {
-  static forRoot(): DynamicModule {
+  static forRoot(options?: TypeOrmAlsModuleOptions): DynamicModule {
     const asyncLocalStorage = this.createALS();
 
     const alsProvider = {
@@ -25,10 +29,15 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
       useValue: asyncLocalStorage,
     };
 
+    const optionsProvider = {
+      provide: TYPE_ORM_ALS_MODULE_OPTIONS,
+      useValue: options || {},
+    };
+
     return {
       module: TypeOrmAlsModule,
       imports: [DiscoveryModule],
-      providers: [alsProvider, DiscoveryService],
+      providers: [alsProvider, optionsProvider, DiscoveryService],
       exports: [alsProvider],
     };
   }
@@ -40,7 +49,8 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
   constructor(
     @Inject(ASYNC_STORAGE)
     private readonly asyncStorage: AsyncLocalStorage<Map<string, any>>,
-    private readonly connection: Connection,
+    @Inject(TYPE_ORM_ALS_MODULE_OPTIONS)
+    private readonly options: TypeOrmAlsModuleOptions,
     private readonly discovery: DiscoveryService,
   ) {}
 
@@ -71,46 +81,30 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
             return this._manager;
           },
         });
-      } else if (instance instanceof Connection) {
-        Object.assign(instance, {
-          _createQueryBuilder: instance.createQueryBuilder,
-        });
+      } else if (instance instanceof DataSource) {
+        const original = instance.createQueryBuilder.bind(instance);
 
-        Object.defineProperty(instance, 'createQueryBuilder', {
-          configurable: true,
-          value<Entity>(
-            entityOrRunner?: EntityTarget<Entity> | QueryRunner,
-            alias?: string,
-            queryRunner?: QueryRunner,
-          ) {
+        Reflect.defineProperty(DataSource.prototype, 'createQueryBuilder', {
+          value: function <Entity>(...args: any[]) {
+            if (args.length === 1 || args.length === 3) {
+              return original(...args);
+            }
+
             const store = asyncStorage.getStore();
             let existingQueryRunner: QueryRunner;
 
             if (store) {
               existingQueryRunner = getQueryRunner(store, instance);
+              if (existingQueryRunner) {
+                if (args.length === 0) {
+                  return original(existingQueryRunner);
+                }
+
+                return original(args[0], args[1], existingQueryRunner);
+              }
             }
 
-            if (
-              queryRunner ||
-              (!alias && entityOrRunner) ||
-              !existingQueryRunner
-            ) {
-              return this._createQueryBuilder(
-                entityOrRunner,
-                alias,
-                queryRunner,
-              );
-            }
-
-            if (!alias) {
-              return this._createQueryBuilder(existingQueryRunner);
-            } else {
-              return this._createQueryBuilder(
-                entityOrRunner,
-                alias,
-                existingQueryRunner,
-              );
-            }
+            return original(...args);
           },
         });
       }
@@ -129,6 +123,12 @@ export class TypeOrmAlsModule implements OnModuleInit, NestModule {
       }
     };
 
-    consumer.apply(middleware).forRoutes('*');
+    let middlewareConfigProxy = consumer.apply(middleware);
+    if (this.options && this.options.exclude) {
+      middlewareConfigProxy = middlewareConfigProxy.exclude(
+        ...this.options.exclude,
+      );
+    }
+    middlewareConfigProxy.forRoutes('*');
   }
 }

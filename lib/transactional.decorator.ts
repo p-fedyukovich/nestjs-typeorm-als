@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { getConnectionToken } from '@nestjs/typeorm';
+import { getDataSourceToken } from '@nestjs/typeorm';
 
 import { Connectable, TransactionalOptions } from './typeorm-als.interfaces';
 import { ASYNC_STORAGE, DEFAULT_OPTIONS } from './typeorm-als.constants';
@@ -19,7 +19,7 @@ export function Transactional(options?: TransactionalOptions): MethodDecorator {
   const { propagation, isolation } = opts;
 
   const injectStorage = Inject(ASYNC_STORAGE);
-  const injectConnection = Inject(getConnectionToken(opts.connection));
+  const injectDataSource = Inject(getDataSourceToken(opts.dataSource));
 
   return (
     target: any,
@@ -27,12 +27,12 @@ export function Transactional(options?: TransactionalOptions): MethodDecorator {
     propertyDescriptor: TypedPropertyDescriptor<any>,
   ) => {
     injectStorage(target, 'storage');
-    injectConnection(target, 'connection');
+    injectDataSource(target, 'dataSource');
 
     const originalMethod = propertyDescriptor.value;
 
     propertyDescriptor.value = async function (...args: any[]) {
-      const { connection, storage } = this as Connectable;
+      const { dataSource, storage } = this as Connectable;
 
       const runOriginal = () => originalMethod.apply(this, args);
 
@@ -41,23 +41,23 @@ export function Transactional(options?: TransactionalOptions): MethodDecorator {
 
         const runWithNewTransaction = () => {
           const transactionCallback = async (manager: EntityManager) => {
-            setEntityManager(store, opts.connection, manager);
+            setEntityManager(store, opts.dataSource, manager);
 
             try {
               return await runOriginal();
             } finally {
-              deleteEntityManager(store, opts.connection);
+              deleteEntityManager(store, opts.dataSource);
             }
           };
 
           if (isolation) {
-            return connection.transaction(isolation, transactionCallback);
+            return dataSource.transaction(isolation, transactionCallback);
           } else {
-            return connection.transaction(transactionCallback);
+            return dataSource.transaction(transactionCallback);
           }
         };
 
-        const entityManager = getEntityManager(store, opts.connection);
+        const entityManager = getEntityManager(store, opts.dataSource);
 
         switch (propagation) {
           case Propagation.MANDATORY:
@@ -78,9 +78,9 @@ export function Transactional(options?: TransactionalOptions): MethodDecorator {
             return runOriginal();
           case Propagation.NOT_SUPPORTED:
             if (entityManager) {
-              deleteEntityManager(store, opts.connection);
+              deleteEntityManager(store, opts.dataSource);
               const result = await runOriginal();
-              setEntityManager(store, opts.connection, entityManager);
+              setEntityManager(store, opts.dataSource, entityManager);
 
               return result;
             }

@@ -1,10 +1,11 @@
-import { Connection, ConnectionOptions } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import { AsyncLocalStorage } from 'async_hooks';
 
 import { IsolationLevel, Propagation } from './typeorm-als.enums';
+import { RouteInfo } from '@nestjs/common/interfaces/middleware/middleware-configuration.interface';
 
 export interface TransactionalOptions {
-  connection?: Connection | ConnectionOptions | string;
+  dataSource?: DataSource | DataSourceOptions | string;
   /**
    * The transaction isolation level.
    */
@@ -16,7 +17,11 @@ export interface TransactionalOptions {
   propagation?: Propagation;
 }
 
+export interface TypeOrmAlsModuleOptions {
+  exclude?: (string | RouteInfo)[];
+}
+
 export interface Connectable {
-  connection: Connection;
+  dataSource: DataSource;
   storage: AsyncLocalStorage<Map<string, any>>;
 }

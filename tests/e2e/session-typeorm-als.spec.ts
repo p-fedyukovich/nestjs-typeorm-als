@@ -2,12 +2,12 @@ import { Test } from '@nestjs/testing';
 import * as Sinon from 'sinon';
 import * as request from 'supertest';
 import { INestApplication } from '@nestjs/common';
-import { UserRepository } from '../src/users/user.repository';
-import { Connection } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { AppModule } from '../src/app.module';
-import { PurseRepository } from '../src/purse/purse.repository';
-import { RemittanceRepository } from '../src/remittance/remittance.repository';
 import { UserService } from '../src/users/user.service';
+import { User } from '../src/entity/user.entity';
+import { Purse } from '../src/entity/purse.entity';
+import { Remittance } from '../src/entity/remittance.entity';
 
 jest.setTimeout(500 * 1000);
 
@@ -15,12 +15,12 @@ describe('TypeOrm session', () => {
   let app: INestApplication;
   let server;
   let sandbox: Sinon.SinonSandbox;
-  let connectionSpy: Sinon.SinonSpiedInstance<Connection>;
-  let userRepository: UserRepository;
-  let purseRepository: PurseRepository;
-  let remittanceRepository: RemittanceRepository;
+  let dataSourceSpy: Sinon.SinonSpiedInstance<DataSource>;
+  let userRepository: Repository<User>;
+  let purseRepository: Repository<Purse>;
+  let remittanceRepository: Repository<Remittance>;
   let userService: UserService;
-  let connection: Connection;
+  let dataSource: DataSource;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -35,13 +35,13 @@ describe('TypeOrm session', () => {
 
     await app.init();
 
-    connection = app.get(Connection);
+    dataSource = app.get(DataSource);
 
-    connectionSpy = sandbox.spy(connection);
+    dataSourceSpy = sandbox.spy(dataSource);
 
-    userRepository = app.get(UserRepository);
-    purseRepository = app.get(PurseRepository);
-    remittanceRepository = app.get(RemittanceRepository);
+    userRepository = dataSource.getRepository(User);
+    purseRepository = dataSource.getRepository(Purse);
+    remittanceRepository = dataSource.getRepository(Remittance);
     userService = app.get(UserService);
   });
 
@@ -60,9 +60,9 @@ describe('TypeOrm session', () => {
   describe('when request is ok', () => {
     it('should create an user', async () => {
       const res = await request(server).post('/').send({ name: 'Pavel' });
-      expect(connectionSpy.createQueryRunner.calledOnce).toBeTruthy();
+      expect(dataSourceSpy.createQueryRunner.calledOnce).toBeTruthy();
       const queryRunner =
-        connectionSpy.createQueryRunner.getCall(0).returnValue;
+        dataSourceSpy.createQueryRunner.getCall(0).returnValue;
 
       expect(queryRunner.isTransactionActive).toBeFalsy();
       expect(queryRunner.isReleased).toBeTruthy();
@@ -79,7 +79,7 @@ describe('TypeOrm session', () => {
     it('should rollback and return 500', async () => {
       const res = await request(server).get('/').send();
       const queryRunner =
-        connectionSpy.createQueryRunner.getCall(0).returnValue;
+        dataSourceSpy.createQueryRunner.getCall(0).returnValue;
 
       expect(queryRunner.isTransactionActive).toBeFalsy();
       expect(queryRunner.isReleased).toBeTruthy();
@@ -100,9 +100,9 @@ describe('TypeOrm session', () => {
         const res = await request(server)
           .post('/builder')
           .send({ name: 'Pavel' });
-        expect(connectionSpy.createQueryRunner.calledOnce).toBeTruthy();
+        expect(dataSourceSpy.createQueryRunner.calledOnce).toBeTruthy();
         const queryRunner =
-          connectionSpy.createQueryRunner.getCall(0).returnValue;
+          dataSourceSpy.createQueryRunner.getCall(0).returnValue;
 
         expect(queryRunner.isTransactionActive).toBeFalsy();
         expect(queryRunner.isReleased).toBeTruthy();
@@ -121,9 +121,9 @@ describe('TypeOrm session', () => {
       const res = await request(server)
         .post('/transactional')
         .send({ name: 'Pavel' });
-      expect(connectionSpy.createQueryRunner.calledOnce).toBeTruthy();
+      expect(dataSourceSpy.createQueryRunner.calledOnce).toBeTruthy();
       const queryRunner =
-        connectionSpy.createQueryRunner.getCall(0).returnValue;
+        dataSourceSpy.createQueryRunner.getCall(0).returnValue;
 
       expect(queryRunner.isTransactionActive).toBeFalsy();
       expect(queryRunner.isReleased).toBeTruthy();
@@ -137,9 +137,9 @@ describe('TypeOrm session', () => {
 
     it('should create an user via service', async () => {
       const user = await userService.createAndGet({ name: 'Petr' });
-      expect(connectionSpy.createQueryRunner.calledOnce).toBeTruthy();
+      expect(dataSourceSpy.createQueryRunner.calledOnce).toBeTruthy();
       const queryRunner =
-        connectionSpy.createQueryRunner.getCall(0).returnValue;
+        dataSourceSpy.createQueryRunner.getCall(0).returnValue;
 
       expect(queryRunner.isTransactionActive).toBeFalsy();
       expect(queryRunner.isReleased).toBeTruthy();

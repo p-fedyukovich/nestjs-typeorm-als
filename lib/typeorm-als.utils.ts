@@ -1,23 +1,23 @@
 import { ENTITY_MANAGER } from './typeorm-als.constants';
 import {
-  Connection,
-  ConnectionOptions,
+  DataSource,
+  DataSourceOptions,
   EntityManager,
   QueryRunner,
 } from 'typeorm';
-import { getConnectionPrefix } from '@nestjs/typeorm';
+import { getDataSourcePrefix } from '@nestjs/typeorm';
 
-function getEntityManagerKey(
-  connection: Connection | ConnectionOptions | string,
+function getDatasourceKey(
+  dataSource: DataSource | DataSourceOptions | string,
 ): string {
-  return getConnectionPrefix(connection) + ENTITY_MANAGER;
+  return getDataSourcePrefix(dataSource) + ENTITY_MANAGER;
 }
 
 export function getQueryRunner(
   store: Map<string, any>,
-  connection: Connection | ConnectionOptions | string,
+  dataSource: DataSource | DataSourceOptions | string,
 ): QueryRunner | null {
-  const entityManager = getEntityManager(store, connection);
+  const entityManager = getEntityManager(store, dataSource);
 
   if (entityManager) {
     const { queryRunner } = entityManager;
@@ -31,9 +31,9 @@ export function getQueryRunner(
 
 export function getEntityManager(
   store: Map<string, any>,
-  connection: Connection | ConnectionOptions | string,
+  dataSource: DataSource | DataSourceOptions | string,
 ): EntityManager | null {
-  const manager = store.get(getEntityManagerKey(connection));
+  const manager = store.get(getDatasourceKey(dataSource));
   if (!manager) {
     return null;
   }
@@ -42,15 +42,15 @@ export function getEntityManager(
 
 export function setEntityManager(
   store: Map<string, any>,
-  connection: Connection | ConnectionOptions | string,
+  dataSource: DataSource | DataSourceOptions | string,
   entityManager: EntityManager,
 ): void {
-  store.set(getEntityManagerKey(connection), entityManager);
+  store.set(getDatasourceKey(dataSource), entityManager);
 }
 
 export function deleteEntityManager(
   store: Map<string, any>,
-  connection: Connection | ConnectionOptions | string,
+  dataSource: DataSource | DataSourceOptions | string,
 ): void {
-  store.delete(getEntityManagerKey(connection));
+  store.delete(getDatasourceKey(dataSource));
 }

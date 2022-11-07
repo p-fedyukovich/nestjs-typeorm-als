@@ -1,6 +1,4 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/typeorm';
-import { Connection } from 'typeorm';
 import { PurseDto } from './purse.dto';
 import { PurseService } from './purse.service';
 import { BalanceValueDto } from './balance-value.dto';
@@ -9,10 +7,7 @@ import { RequestTransaction } from '../../../lib';
 
 @Controller()
 export class PurseController {
-  constructor(
-    private readonly purses: PurseService,
-    @InjectConnection() private readonly connection: Connection,
-  ) {}
+  constructor(private readonly purses: PurseService) {}
 
   @Get('/purse/:purseId')
   async getById(@Param('purseId') purseId: string): Promise<Purse> {

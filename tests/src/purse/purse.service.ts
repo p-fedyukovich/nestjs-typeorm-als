@@ -1,25 +1,24 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Injectable } from '@nestjs/common';
 import { User } from '../entity/user.entity';
-import { UserRepository } from '../users/user.repository';
 import { Purse } from '../entity/purse.entity';
-import { PurseRepository } from './purse.repository';
 import { PurseDto } from './purse.dto';
 import {
   NOT_FOUND_PURSE_WITH_PURSE_ID,
   NOT_FOUND_USER_WITH_ID,
 } from '../errors/errors';
 import { classToPlain, plainToClass } from 'class-transformer';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class PurseService {
   constructor(
-    @InjectRepository(User) private readonly users: UserRepository,
-    @InjectRepository(Purse) private readonly purses: PurseRepository,
+    @InjectRepository(User) private readonly users: Repository<User>,
+    @InjectRepository(Purse) private readonly purses: Repository<Purse>,
   ) {}
 
   async create(purseDto: PurseDto, userId: number): Promise<Purse> {
-    const user = await this.users.findOne(userId);
+    const user = await this.users.findOneBy({ id: userId });
     if (user === undefined) {
       throw new Error(NOT_FOUND_USER_WITH_ID(userId));
     }
@@ -34,7 +33,7 @@ export class PurseService {
   }
 
   async topUp(purseId: number, sum: number): Promise<Purse> {
-    const purse = await this.purses.findOne(purseId);
+    const purse = await this.purses.findOneBy({ id: purseId });
     if (purse === undefined) {
       throw new Error(NOT_FOUND_PURSE_WITH_PURSE_ID(purseId));
     }
@@ -46,7 +45,7 @@ export class PurseService {
   }
 
   async getById(userId: number): Promise<Purse> {
-    return await this.purses.findOne(userId);
+    return await this.purses.findOneBy({ id: userId });
   }
 
   async save(purse: Purse): Promise<Purse> {

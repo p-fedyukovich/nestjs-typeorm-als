@@ -8,8 +8,8 @@ import {
 } from '../errors/errors';
 import { UserService } from '../users/user.service';
 import { PurseService } from '../purse/purse.service';
-import { RemittanceRepository } from './remittance.repository';
 import { RemittanceResultDto } from './remittance-result.dto';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class RemittanceService {
@@ -17,7 +17,7 @@ export class RemittanceService {
     private readonly users: UserService,
     private readonly purses: PurseService,
     @InjectRepository(Remittance)
-    private readonly remittance: RemittanceRepository,
+    private readonly remittance: Repository<Remittance>,
   ) {}
 
   async makeRemittance(
